@@ -136,31 +136,31 @@ impl Window {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use {self::Variance::*, super::*};
 
     #[test]
     fn check_compare_lt() {
-        assert_eq!(Variance::compare(Some(&10), Some(&20)), Variance::Increased);
+        assert_eq!(Variance::compare(Some(&10), Some(&20)), Increased);
     }
 
     #[test]
     fn check_compare_gt() {
-        assert_eq!(Variance::compare(Some(&20), Some(&10)), Variance::Decreased);
+        assert_eq!(Variance::compare(Some(&20), Some(&10)), Decreased);
     }
 
     #[test]
     fn check_compare_eq() {
-        assert_eq!(Variance::compare(Some(&10), Some(&10)), Variance::Unchanged);
+        assert_eq!(Variance::compare(Some(&10), Some(&10)), Unchanged);
     }
 
     #[test]
     fn check_compare_first() {
-        assert_eq!(Variance::compare(None, Some(&10)), Variance::NotApplicable);
+        assert_eq!(Variance::compare(None, Some(&10)), NotApplicable);
     }
 
     #[test]
     fn check_compare_last() {
-        assert_eq!(Variance::compare(Some(&10), None), Variance::NotApplicable);
+        assert_eq!(Variance::compare(Some(&10), None), NotApplicable);
     }
 
     #[test]
@@ -170,16 +170,16 @@ mod tests {
         assert_eq!(
             depths.variances(depths.depths()),
             vec![
-                Variance::NotApplicable,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Decreased,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Decreased,
-                Variance::Increased
+                NotApplicable,
+                Increased,
+                Increased,
+                Increased,
+                Decreased,
+                Increased,
+                Increased,
+                Increased,
+                Decreased,
+                Increased
             ]
         );
     }
@@ -189,7 +189,7 @@ mod tests {
         let depths = Depths::new(true, vec![199, 200, 208, 210, 200, 207, 240, 269, 260, 263]);
         let variances = depths.variances(depths.depths());
 
-        assert_eq!(depths.count(&variances, &Variance::Increased), 7);
+        assert_eq!(depths.count(&variances, &Increased), 7);
     }
 
     #[test]
@@ -210,14 +210,14 @@ mod tests {
         assert_eq!(
             depths.variances(&windows),
             vec![
-                Variance::NotApplicable,
-                Variance::Increased,
-                Variance::Unchanged,
-                Variance::Decreased,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Increased,
-                Variance::Increased,
+                NotApplicable,
+                Increased,
+                Unchanged,
+                Decreased,
+                Increased,
+                Increased,
+                Increased,
+                Increased,
             ]
         )
     }
@@ -228,6 +228,6 @@ mod tests {
         let windows = depths.windows(depths.depths());
         let variances = depths.variances(&windows);
 
-        assert_eq!(depths.count(&variances, &Variance::Increased), 5)
+        assert_eq!(depths.count(&variances, &Increased), 5)
     }
 }
