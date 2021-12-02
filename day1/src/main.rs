@@ -32,7 +32,7 @@ impl Depths {
         &self.depths
     }
 
-    fn windows(&self, depths: &Vec<u32>) -> Vec<u32> {
+    fn windows(&self, depths: &[u32]) -> Vec<u32> {
         let mut windows = Vec::new();
         let mut window = Window::new();
 
@@ -49,7 +49,7 @@ impl Depths {
         windows
     }
 
-    fn variances(&self, depths: &Vec<u32>) -> Vec<Variance> {
+    fn variances(&self, depths: &[u32]) -> Vec<Variance> {
         let mut variances = Vec::new();
         let mut previous: Option<&u32> = None;
 
@@ -65,7 +65,7 @@ impl Depths {
         variances
     }
 
-    fn count(&self, variances: &Vec<Variance>, variance: &Variance) -> usize {
+    fn count(&self, variances: &[Variance], variance: &Variance) -> usize {
         variances
             .iter()
             .inspect(|v| self.debug(v))
@@ -91,7 +91,7 @@ enum Variance {
 impl Variance {
     fn compare(first: Option<&u32>, second: Option<&u32>) -> Self {
         match (first, second) {
-            (Some(first), Some(second)) => match first.cmp(&second) {
+            (Some(first), Some(second)) => match first.cmp(second) {
                 Ordering::Less => Variance::Increased,
                 Ordering::Greater => Variance::Decreased,
                 _ => Variance::Unchanged,

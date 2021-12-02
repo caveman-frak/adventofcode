@@ -6,7 +6,6 @@ use {
 
 fn main() -> Result<()> {
     let mut submarine = Submarine::default();
-    submarine.debug = true;
     let directions = Inputs::from_file(to_direction, Path::new("day2/data/input.txt"))?;
     submarine.adjustments(directions);
     println!(
@@ -23,14 +22,18 @@ struct Submarine {
     debug: bool,
     horizontal: u32,
     depth: u32,
+    aim: i32,
 }
 
 impl Submarine {
     fn adjust(&mut self, direction: Direction) -> &mut Self {
         match direction {
-            Direction::Forward(x) => self.horizontal += x,
-            Direction::Up(x) => self.depth -= x,
-            Direction::Down(x) => self.depth += x,
+            Direction::Forward(x) => {
+                self.horizontal += x;
+                self.depth = ((self.depth as i32) + (x as i32 * self.aim)) as u32;
+            }
+            Direction::Up(x) => self.aim -= x as i32,
+            Direction::Down(x) => self.aim += x as i32,
         }
 
         if self.debug {
@@ -48,8 +51,8 @@ impl Submarine {
         self
     }
 
-    fn absolute(&self) -> u32 {
-        self.horizontal * self.depth
+    fn absolute(&self) -> u64 {
+        self.horizontal as u64 * self.depth as u64
     }
 }
 
@@ -136,8 +139,8 @@ mod tests {
             Forward(2),
         ]);
         assert_eq!(sub.horizontal, 15);
-        assert_eq!(sub.depth, 10);
-        assert_eq!(sub.absolute(), 150);
+        assert_eq!(sub.depth, 60);
+        assert_eq!(sub.absolute(), 900);
     }
 
     #[test]
