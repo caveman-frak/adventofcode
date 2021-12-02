@@ -1,12 +1,13 @@
-use std::{
-    cmp::Ordering,
-    fs::File,
-    io::{BufRead, BufReader, Error},
-    path::Path,
+use {
+    common::{convert::to_u32, input::Inputs},
+    std::{cmp::Ordering, io::Error, path::Path},
 };
 
 fn main() -> Result<(), Error> {
-    let depths = Depths::new(false, file(Path::new("day1/test/input.txt"))?);
+    let depths = Depths::new(
+        false,
+        Inputs::from_file(to_u32, Path::new("day1/data/input.txt"))?,
+    );
 
     let windows = depths.windows(depths.depths());
     let variances = depths.variances(&windows);
@@ -14,18 +15,6 @@ fn main() -> Result<(), Error> {
     println!("No of increases = {}", count);
 
     Ok(())
-}
-
-fn file(path: &Path) -> Result<Vec<u32>, Error> {
-    Ok(inputs(BufReader::new(File::open(path)?)))
-}
-
-fn inputs<R: BufRead>(reader: R) -> Vec<u32> {
-    reader
-        .lines()
-        .filter_map(|result| result.ok())
-        .filter_map(|s| s.parse().ok())
-        .collect()
 }
 
 #[derive(Debug)]
@@ -147,7 +136,7 @@ impl Window {
 
 #[cfg(test)]
 mod tests {
-    use {super::*, std::io::Cursor};
+    use super::*;
 
     #[test]
     fn check_compare_lt() {
@@ -240,19 +229,5 @@ mod tests {
         let variances = depths.variances(&windows);
 
         assert_eq!(depths.count(&variances, &Variance::Increased), 5)
-    }
-
-    #[test]
-    fn check_reader() {
-        let buffer = Cursor::new(b"100\n200\n300");
-        assert_eq!(inputs(buffer), vec![100, 200, 300]);
-    }
-
-    #[test]
-    fn check_file() {
-        assert_eq!(
-            file(Path::new("test/test.txt")).unwrap(),
-            vec![101, 201, 301]
-        );
     }
 }
