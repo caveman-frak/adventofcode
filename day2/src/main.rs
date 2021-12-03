@@ -1,12 +1,12 @@
 use {
     anyhow::{anyhow, Error, Result},
     common::input::Inputs,
-    std::{convert::TryFrom, path::Path, str::FromStr},
+    std::{convert::TryFrom, str::FromStr},
 };
 
 fn main() -> Result<()> {
     let mut submarine = Submarine::default();
-    let directions = Inputs::from_file(to_direction, Path::new("day2/data/input.txt"))?;
+    let directions = Inputs::from_path(to_direction, "day2/data/input.txt")?;
     submarine.adjustments(directions);
     println!(
         "submarine = {:?}, absolute = {}",
@@ -83,7 +83,7 @@ impl TryFrom<&str> for Direction {
                     "forward" => Ok(Direction::Forward(distance)),
                     "up" => Ok(Direction::Up(distance)),
                     "down" => Ok(Direction::Down(distance)),
-                    _ => Err(anyhow!("Invalid direction")),
+                    dir => Err(anyhow!("Invalid direction '{}'", dir)),
                 }
             } else {
                 Err(anyhow!("Missing distance"))

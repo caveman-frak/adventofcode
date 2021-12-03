@@ -8,6 +8,10 @@ pub struct Inputs {}
 
 #[allow(dead_code)]
 impl Inputs {
+    pub fn from_path<T>(convert: fn(String) -> Option<T>, path: &str) -> Result<Vec<T>, Error> {
+        Inputs::from_file(convert, Path::new(path))
+    }
+
     pub fn from_file<T>(convert: fn(String) -> Option<T>, path: &Path) -> Result<Vec<T>, Error> {
         Ok(Inputs::inputs(convert, BufReader::new(File::open(path)?)))
     }
