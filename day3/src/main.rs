@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 use {
     anyhow::{Error, Result},
     common::input::Inputs,
@@ -14,20 +16,36 @@ use {
 fn main() -> Result<()> {
     let inputs = Inputs::from_path(to_diagnostic, "day3/data/input.txt")?;
 
-    let diagnostics = inputs.iter().fold(Diagnostics::new(), |mut a, d| {
-        a += d;
-        a
-    });
-
-    let gamma: u32 = diagnostics.gamma().try_into()?;
-    let epsilon: u32 = diagnostics.epsilon().try_into()?;
-
-    println!("{}", gamma * epsilon);
+    part1(&inputs)?;
+    part2(&inputs)?;
 
     Ok(())
 }
 
-#[derive(Debug)]
+fn part1(inputs: &[Diagnostic]) -> Result<()> {
+    let summary = Summary::summarize(&inputs);
+
+    let gamma: u32 = summary.gamma().try_into()?;
+    let epsilon: u32 = summary.epsilon().try_into()?;
+
+    println!("Part 1 => {}", gamma * epsilon);
+
+    Ok(())
+}
+
+fn part2(inputs: &[Diagnostic]) -> Result<()> {
+    let rating_high = Summary::rating(inputs, vec![], true);
+    let rating_low = Summary::rating(inputs, vec![], false);
+
+    let oxygen: u32 = rating_high.try_into()?;
+    let co2: u32 = rating_low.try_into()?;
+
+    println!("Part 2 => {}", oxygen * co2);
+
+    Ok(())
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 struct Diagnostic {
     values: Vec<bool>,
 }
@@ -50,6 +68,15 @@ impl Diagnostic {
         }
 
         self
+    }
+
+    fn matches(&self, criteria: &[bool]) -> bool {
+        for (i, value) in criteria.iter().enumerate() {
+            if &self.values[i] != value {
+                return false;
+            }
+        }
+        return true;
     }
 }
 
@@ -95,7 +122,7 @@ impl TryFrom<Diagnostic> for u32 {
     type Error = ParseIntError;
 
     fn try_from(d: Diagnostic) -> result::Result<Self, Self::Error> {
-        u32::from_str_radix(&*format!("{:b}", d), 2)
+        u32::try_from(&d)
     }
 }
 
@@ -111,17 +138,45 @@ fn to_diagnostic(s: String) -> Option<Diagnostic> {
     s.parse().ok()
 }
 
-#[derive(Debug)]
-struct Diagnostics {
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+struct Summary {
     count: u32,
     totals: Vec<u32>,
 }
 
-impl Diagnostics {
+impl Summary {
     fn new() -> Self {
         Self {
             count: 0,
             totals: Vec::new(),
+        }
+    }
+
+    fn summarize(inputs: &[Diagnostic]) -> Self {
+        inputs.iter().fold(Summary::new(), |mut a, d| {
+            a += d;
+            a
+        })
+    }
+
+    fn rating(inputs: &[Diagnostic], mut criteria: Vec<bool>, high: bool) -> Diagnostic {
+        let position = criteria.len();
+        let summary = Self::summarize(inputs);
+        if summary.count == 1 {
+            summary.gamma()
+        } else {
+            let diagnostic = match high {
+                true => summary.gamma(),
+                false => summary.epsilon(),
+            };
+            criteria.push(diagnostic.values[position]);
+            let filtered: Vec<Diagnostic> = inputs
+                .iter()
+                .cloned()
+                .filter(|v| v.matches(&criteria))
+                .collect();
+
+            Self::rating(&filtered, criteria, high)
         }
     }
 
@@ -149,7 +204,7 @@ impl Diagnostics {
     }
 }
 
-impl AddAssign<&Diagnostic> for Diagnostics {
+impl AddAssign<&Diagnostic> for Summary {
     fn add_assign(&mut self, diagnostic: &Diagnostic) {
         if self.totals.len() == 0 {
             self.init(&diagnostic);
@@ -165,7 +220,7 @@ impl AddAssign<&Diagnostic> for Diagnostics {
     }
 }
 
-impl AddAssign<Diagnostic> for Diagnostics {
+impl AddAssign<Diagnostic> for Summary {
     fn add_assign(&mut self, diagnostic: Diagnostic) {
         self.add_assign(&diagnostic)
     }
@@ -178,48 +233,46 @@ mod tests {
     #[test]
     fn check_add_assign() {
         let diagnostic = Diagnostic::new(&vec![true, false, false, true, false]);
-        let mut diagnostics = Diagnostics::new();
-        diagnostics += diagnostic;
-        assert_eq!(diagnostics.count, 1);
-        assert_eq!(diagnostics.totals, vec![1, 0, 0, 1, 0]);
+        let mut summary = Summary::new();
+        summary += diagnostic;
+        assert_eq!(summary.count, 1);
+        assert_eq!(summary.totals, vec![1, 0, 0, 1, 0]);
     }
 
     #[test]
     fn check_gamma() {
         let diagnostic = Diagnostic::new(&vec![true, false, false, true, false]);
-        let mut diagnostics = Diagnostics::new();
-        diagnostics += diagnostic;
+        let mut summary = Summary::new();
+        summary += diagnostic;
         assert_eq!(
-            diagnostics.gamma().values,
+            summary.gamma().values,
             vec![true, false, false, true, false]
         );
         assert_eq!(
-            diagnostics.epsilon().values,
+            summary.epsilon().values,
             vec![false, true, true, false, true]
         );
     }
 
     #[test]
     fn check_diagnostics() -> Result<()> {
-        let mut diagnostics = Diagnostics::new();
-        diagnostics += Diagnostic::new(&vec![false, false, true, false, false]);
-        diagnostics += Diagnostic::new(&vec![true, true, true, true, false]);
-        diagnostics += Diagnostic::new(&vec![true, false, true, true, false]);
+        let summary = Summary::summarize(&vec![
+            Diagnostic::new(&vec![false, false, true, false, false]),
+            Diagnostic::new(&vec![true, true, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, true]),
+            Diagnostic::new(&vec![true, false, true, false, true]),
+            Diagnostic::new(&vec![false, true, true, true, true]),
+            Diagnostic::new(&vec![false, false, true, true, true]),
+            Diagnostic::new(&vec![true, true, true, false, false]),
+            Diagnostic::new(&vec![true, false, false, false, false]),
+            Diagnostic::new(&vec![true, true, false, false, true]),
+            Diagnostic::new(&vec![false, false, false, true, false]),
+            Diagnostic::new(&vec![false, true, false, true, false]),
+        ]);
 
-        diagnostics += Diagnostic::new(&vec![true, false, true, true, true]);
-        diagnostics += Diagnostic::new(&vec![true, false, true, false, true]);
-        diagnostics += Diagnostic::new(&vec![false, true, true, true, true]);
-
-        diagnostics += Diagnostic::new(&vec![false, false, true, true, true]);
-        diagnostics += Diagnostic::new(&vec![true, true, true, false, false]);
-        diagnostics += Diagnostic::new(&vec![true, false, false, false, false]);
-
-        diagnostics += Diagnostic::new(&vec![true, true, false, false, true]);
-        diagnostics += Diagnostic::new(&vec![false, false, false, true, false]);
-        diagnostics += Diagnostic::new(&vec![false, true, false, true, false]);
-
-        let gamma = &diagnostics.gamma();
-        let epsilon = &diagnostics.epsilon();
+        let gamma = &summary.gamma();
+        let epsilon = &summary.epsilon();
         assert_eq!(gamma.values, vec![true, false, true, true, false]);
         assert_eq!(epsilon.values, vec![false, true, false, false, true]);
         assert_eq!(u32::try_from(gamma)?, 22);
@@ -255,5 +308,58 @@ mod tests {
         assert_eq!(i, 9);
 
         Ok(())
+    }
+
+    #[test]
+    fn check_matches() {
+        let d: Diagnostic = "01001".parse().unwrap();
+
+        assert_eq!(d.matches(&vec![]), true);
+        assert_eq!(d.matches(&vec![false]), true);
+        assert_eq!(d.matches(&vec![true]), false);
+        assert_eq!(d.matches(&vec![false, true]), true);
+        assert_eq!(d.matches(&vec![false, false]), false);
+    }
+
+    #[test]
+    fn check_rating_high() {
+        let inputs = vec![
+            Diagnostic::new(&vec![false, false, true, false, false]),
+            Diagnostic::new(&vec![true, true, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, true]),
+            Diagnostic::new(&vec![true, false, true, false, true]),
+            Diagnostic::new(&vec![false, true, true, true, true]),
+            Diagnostic::new(&vec![false, false, true, true, true]),
+            Diagnostic::new(&vec![true, true, true, false, false]),
+            Diagnostic::new(&vec![true, false, false, false, false]),
+            Diagnostic::new(&vec![true, true, false, false, true]),
+            Diagnostic::new(&vec![false, false, false, true, false]),
+            Diagnostic::new(&vec![false, true, false, true, false]),
+        ];
+        let rating = Summary::rating(&inputs, vec![], true);
+
+        assert_eq!(rating.values, vec![true, false, true, true, true]);
+    }
+
+    #[test]
+    fn check_rating_low() {
+        let inputs = vec![
+            Diagnostic::new(&vec![false, false, true, false, false]),
+            Diagnostic::new(&vec![true, true, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, false]),
+            Diagnostic::new(&vec![true, false, true, true, true]),
+            Diagnostic::new(&vec![true, false, true, false, true]),
+            Diagnostic::new(&vec![false, true, true, true, true]),
+            Diagnostic::new(&vec![false, false, true, true, true]),
+            Diagnostic::new(&vec![true, true, true, false, false]),
+            Diagnostic::new(&vec![true, false, false, false, false]),
+            Diagnostic::new(&vec![true, true, false, false, true]),
+            Diagnostic::new(&vec![false, false, false, true, false]),
+            Diagnostic::new(&vec![false, true, false, true, false]),
+        ];
+        let rating = Summary::rating(&inputs, vec![], false);
+
+        assert_eq!(rating.values, vec![false, true, false, true, false]);
     }
 }
