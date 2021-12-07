@@ -1,8 +1,6 @@
-#![recursion_limit = "256"]
-
 use {
     anyhow::{Error, Result},
-    common::input::Inputs,
+    common::input::{from_path, inputs},
     std::{
         convert::TryFrom,
         fmt::{self, Binary, Formatter, Write},
@@ -14,7 +12,7 @@ use {
 };
 
 fn main() -> Result<()> {
-    let inputs = Inputs::from_path(to_diagnostic, "day3/data/input.txt")?;
+    let inputs = inputs(to_diagnostic, from_path("day3/data/input.txt")?);
 
     part1(&inputs)?;
     part2(&inputs)?;
@@ -28,7 +26,7 @@ fn part1(inputs: &[Diagnostic]) -> Result<()> {
     let gamma: u32 = summary.gamma().try_into()?;
     let epsilon: u32 = summary.epsilon().try_into()?;
 
-    println!("Part 1 => {}", gamma * epsilon);
+    println!(" Day 3 Part 1 => {}", gamma * epsilon);
 
     Ok(())
 }
@@ -40,7 +38,7 @@ fn part2(inputs: &[Diagnostic]) -> Result<()> {
     let oxygen: u32 = rating_high.try_into()?;
     let co2: u32 = rating_low.try_into()?;
 
-    println!("Part 2 => {}", oxygen * co2);
+    println!("Day 3 Part 2 => {}", oxygen * co2);
 
     Ok(())
 }

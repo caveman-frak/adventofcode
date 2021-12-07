@@ -1,10 +1,13 @@
 use {
-    common::{convert::to_u32, input::Inputs},
+    common::{
+        convert::to_u32,
+        input::{from_path, inputs},
+    },
     std::{cmp::Ordering, io::Error},
 };
 
 fn main() -> Result<(), Error> {
-    let depths = Depths::new(false, Inputs::from_path(to_u32, "day1/data/input.txt")?);
+    let depths = Depths::new(false, inputs(to_u32, from_path("day1/data/input.txt")?));
 
     let windows = depths.windows(depths.depths());
     let variances = depths.variances(&windows);

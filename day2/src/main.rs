@@ -1,12 +1,12 @@
 use {
     anyhow::{anyhow, Error, Result},
-    common::input::Inputs,
+    common::input::{from_path, inputs},
     std::{convert::TryFrom, str::FromStr},
 };
 
 fn main() -> Result<()> {
     let mut submarine = Submarine::default();
-    let directions = Inputs::from_path(to_direction, "day2/data/input.txt")?;
+    let directions = inputs(to_direction, from_path("day2/data/input.txt")?);
     submarine.adjustments(directions);
     println!(
         "submarine = {:?}, absolute = {}",
