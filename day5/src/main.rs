@@ -8,14 +8,23 @@ fn main() -> Result<()> {
     let inputs = inputs(to_line, from_path("day5/data/input.txt")?);
 
     part1(&inputs)?;
+    part2(&inputs)?;
 
     Ok(())
 }
 
 fn part1(inputs: &[Line]) -> Result<()> {
     let mut grid = Grid::default();
-    inputs.iter().for_each(|l| grid.plot(&l));
+    inputs.iter().for_each(|l| grid.plot(&l, false));
     println!("Day 5 Part 1 => {}", grid.points(2).count());
+
+    Ok(())
+}
+
+fn part2(inputs: &[Line]) -> Result<()> {
+    let mut grid = Grid::default();
+    inputs.iter().for_each(|l| grid.plot(&l, true));
+    println!("Day 5 Part 2 => {}", grid.points(2).count());
 
     Ok(())
 }
@@ -90,6 +99,11 @@ impl Line {
 
     fn is_vertical(&self) -> bool {
         self.start.y == self.end.y
+    }
+
+    fn is_diagonal(&self) -> bool {
+        (self.end.y as i32 - self.start.y as i32).abs()
+            == (self.end.x as i32 - self.start.x as i32).abs()
     }
 
     fn points(&self) -> PointIterator {
@@ -171,8 +185,8 @@ struct Grid {
 }
 
 impl Grid {
-    fn plot(&mut self, line: &Line) {
-        if line.is_horizontal() || line.is_vertical() {
+    fn plot(&mut self, line: &Line, allow_diagonal: bool) {
+        if line.is_horizontal() || line.is_vertical() || (allow_diagonal && line.is_diagonal()) {
             for p in line.points() {
                 *self.points.entry(p).or_default() += 1;
             }
@@ -212,6 +226,30 @@ mod tests {
                 end: Point { x: 5, y: 9 }
             }
         )
+    }
+
+    #[test]
+    fn check_horizontal() {
+        assert_eq!(Line::coords(0, 0, 0, 5).is_horizontal(), true);
+        assert_eq!(Line::coords(5, 0, 0, 0).is_horizontal(), false);
+        assert_eq!(Line::coords(0, 0, 5, 5).is_horizontal(), false);
+        assert_eq!(Line::coords(0, 0, 2, 5).is_horizontal(), false);
+    }
+
+    #[test]
+    fn check_vertical() {
+        assert_eq!(Line::coords(0, 0, 0, 5).is_vertical(), false);
+        assert_eq!(Line::coords(5, 0, 0, 0).is_vertical(), true);
+        assert_eq!(Line::coords(0, 0, 5, 5).is_vertical(), false);
+        assert_eq!(Line::coords(0, 0, 2, 5).is_vertical(), false);
+    }
+
+    #[test]
+    fn check_diagonal() {
+        assert_eq!(Line::coords(0, 0, 0, 5).is_diagonal(), false);
+        assert_eq!(Line::coords(5, 0, 0, 0).is_diagonal(), false);
+        assert_eq!(Line::coords(0, 0, 5, 5).is_diagonal(), true);
+        assert_eq!(Line::coords(0, 0, 2, 5).is_diagonal(), false);
     }
 
     #[test]
@@ -275,7 +313,7 @@ mod tests {
     #[test]
     fn check_grid_plot() {
         let mut grid = Grid::default();
-        grid.plot(&Line::coords(0, 9, 5, 9));
+        grid.plot(&Line::coords(0, 9, 5, 9), false);
         assert_eq!(grid.points.len(), 6);
         let mut points = grid.points.iter().collect::<Vec<(&Point, &u32)>>();
         points.sort();
@@ -295,14 +333,34 @@ mod tests {
     #[test]
     fn check_grid_plot_diagonal() {
         let mut grid = Grid::default();
-        grid.plot(&Line::coords(0, 4, 5, 9));
+        grid.plot(&Line::coords(0, 4, 5, 9), false);
         assert_eq!(grid.points.len(), 0);
+    }
+
+    #[test]
+    fn check_grid_plot_diagonal_allowed() {
+        let mut grid = Grid::default();
+        grid.plot(&Line::coords(0, 4, 5, 9), true);
+        assert_eq!(grid.points.len(), 6);
+        let mut points = grid.points.iter().collect::<Vec<(&Point, &u32)>>();
+        points.sort();
+        assert_eq!(
+            points,
+            vec![
+                (&Point::new(0, 4), &1),
+                (&Point::new(1, 5), &1),
+                (&Point::new(2, 6), &1),
+                (&Point::new(3, 7), &1),
+                (&Point::new(4, 8), &1),
+                (&Point::new(5, 9), &1)
+            ]
+        );
     }
 
     #[test]
     fn check_grid_plot_backwards() {
         let mut grid = Grid::default();
-        grid.plot(&Line::coords(5, 9, 0, 9));
+        grid.plot(&Line::coords(5, 9, 0, 9), false);
         assert_eq!(grid.points.len(), 6);
         let mut points = grid.points.iter().collect::<Vec<(&Point, &u32)>>();
         points.sort();
@@ -334,7 +392,7 @@ mod tests {
             Line::coords(0, 0, 8, 8),
             Line::coords(5, 5, 8, 2),
         ];
-        lines.iter().for_each(|l| grid.plot(&l));
+        lines.iter().for_each(|l| grid.plot(&l, false));
         let mut points = grid.points(2).collect::<Vec<&Point>>();
         points.sort();
         assert_eq!(points.len(), 5);
