@@ -15,7 +15,7 @@ fn main() -> Result<()> {
 
 fn part1(inputs: &[Line]) -> Result<()> {
     let mut grid = Grid::default();
-    inputs.iter().for_each(|l| grid.plot(&l, false));
+    inputs.iter().for_each(|l| grid.plot(l, false));
     println!("Day 5 Part 1 => {}", grid.points(2).count());
 
     Ok(())
@@ -23,7 +23,7 @@ fn part1(inputs: &[Line]) -> Result<()> {
 
 fn part2(inputs: &[Line]) -> Result<()> {
     let mut grid = Grid::default();
-    inputs.iter().for_each(|l| grid.plot(&l, true));
+    inputs.iter().for_each(|l| grid.plot(l, true));
     println!("Day 5 Part 2 => {}", grid.points(2).count());
 
     Ok(())
@@ -179,7 +179,7 @@ impl Iterator for PointIterator {
 
 impl FusedIterator for PointIterator {}
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 struct Grid {
     points: HashMap<Point, u32>,
 }
@@ -197,14 +197,6 @@ impl Grid {
         self.points
             .iter()
             .filter_map(move |(k, v)| if *v >= threshold { Some(k) } else { None })
-    }
-}
-
-impl Default for Grid {
-    fn default() -> Self {
-        Grid {
-            points: HashMap::new(),
-        }
     }
 }
 

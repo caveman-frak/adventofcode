@@ -21,7 +21,7 @@ fn main() -> Result<()> {
 }
 
 fn part1(inputs: &[Diagnostic]) -> Result<()> {
-    let summary = Summary::summarize(&inputs);
+    let summary = Summary::summarize(inputs);
 
     let gamma: u32 = summary.gamma().try_into()?;
     let epsilon: u32 = summary.epsilon().try_into()?;
@@ -74,7 +74,7 @@ impl Diagnostic {
                 return false;
             }
         }
-        return true;
+        true
     }
 }
 
@@ -204,8 +204,8 @@ impl Summary {
 
 impl AddAssign<&Diagnostic> for Summary {
     fn add_assign(&mut self, diagnostic: &Diagnostic) {
-        if self.totals.len() == 0 {
-            self.init(&diagnostic);
+        if self.totals.is_empty() {
+            self.init(diagnostic);
         }
 
         self.count += 1;
