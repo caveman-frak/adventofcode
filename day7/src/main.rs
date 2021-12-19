@@ -18,13 +18,14 @@ fn main() -> Result<()> {
 
 fn part1(inputs: &[u32]) -> Result<()> {
     let cast = Cast::new(inputs);
-    println!("Day 7 Part 1 => {:?}", cast.position());
+    println!("Day 7 Part 1 => {:?}", cast.min_distance(|x| x));
 
     Ok(())
 }
 
-fn part2(_inputs: &[u32]) -> Result<()> {
-    println!("Day 7 Part 2 => {}", "");
+fn part2(inputs: &[u32]) -> Result<()> {
+    let cast = Cast::new(inputs);
+    println!("Day 7 Part 1 => {:?}", cast.min_distance(cost));
 
     Ok(())
 }
@@ -35,6 +36,10 @@ fn diff(one: u32, other: u32) -> u32 {
     } else {
         other - one
     }
+}
+
+fn cost(distance: u32) -> u32 {
+    (0u32..=distance).sum::<u32>()
 }
 
 #[derive(Debug)]
@@ -64,18 +69,18 @@ impl Cast {
         }
     }
 
-    fn distance(&self, from: u32) -> u32 {
+    fn distance(&self, from: u32, cost: fn(u32) -> u32) -> u32 {
         self.distribution
             .iter()
-            .fold(0, |acc, (k, v)| acc + v * diff(from, *k))
+            .fold(0, |acc, (k, v)| acc + v * cost(diff(from, *k)))
     }
 
-    fn position(&self) -> (u32, u32) {
+    fn min_distance(&self, cost: fn(u32) -> u32) -> (u32, u32) {
         let mut min_position = self.min;
         let mut min_distance = u32::MAX;
 
         for position in self.min..self.max {
-            let distance = self.distance(position);
+            let distance = self.distance(position, cost);
             if distance < min_distance {
                 min_distance = distance;
                 min_position = position;
@@ -105,17 +110,35 @@ mod tests {
         let input: Vec<u32> = vec![16, 1, 2, 0, 4, 2, 7, 1, 2, 14];
         let cast = Cast::new(&input);
 
-        assert_eq!(cast.distance(1), 41);
-        assert_eq!(cast.distance(2), 37);
-        assert_eq!(cast.distance(3), 39);
-        assert_eq!(cast.distance(10), 71);
+        assert_eq!(cast.distance(1, |x| x), 41);
+        assert_eq!(cast.distance(2, |x| x), 37);
+        assert_eq!(cast.distance(3, |x| x), 39);
+        assert_eq!(cast.distance(10, |x| x), 71);
     }
 
     #[test]
-    fn check_position() {
+    fn check_min_position() {
         let input: Vec<u32> = vec![16, 1, 2, 0, 4, 2, 7, 1, 2, 14];
         let cast = Cast::new(&input);
 
-        assert_eq!(cast.position(), (2, 37));
+        assert_eq!(cast.min_distance(|x| x), (2, 37));
+    }
+
+    #[test]
+    fn check_cost() {
+        assert_eq!(cost(1), 1);
+        assert_eq!(cost(2), 3);
+        assert_eq!(cost(3), 6);
+        assert_eq!(cost(4), 10);
+        assert_eq!(cost(5), 15);
+        assert_eq!(cost(10), 55);
+    }
+
+    #[test]
+    fn check_min_cost() {
+        let input: Vec<u32> = vec![16, 1, 2, 0, 4, 2, 7, 1, 2, 14];
+        let cast = Cast::new(&input);
+
+        assert_eq!(cast.min_distance(cost), (5, 168));
     }
 }
