@@ -13,14 +13,14 @@ fn main() -> Result<()> {
 
 fn part1(path: &str) -> Result<()> {
     let inputs = inputs(to_usize, from_path(path)?);
-    println!("Day 7 Part 1 => {:?}", inputs.iter().sum::<usize>());
+    println!("Day 8 Part 1 => {:?}", inputs.iter().sum::<usize>());
 
     Ok(())
 }
 
 fn part2(path: &str) -> Result<()> {
     let inputs = inputs(to_usize2, from_path(path)?);
-    println!("Day 7 Part 2 => {:?}", inputs.iter().sum::<usize>());
+    println!("Day 8 Part 2 => {:?}", inputs.iter().sum::<usize>());
 
     Ok(())
 }
@@ -102,10 +102,10 @@ impl Default for Digit {
     }
 }
 
-fn sort<'a, T: Into<String>>(s: T) -> String {
+fn sort<T: Into<String>>(s: T) -> String {
     let s = s.into();
     let mut v: Vec<char> = s.trim().chars().collect();
-    v.sort();
+    v.sort_unstable();
     v.iter().collect::<String>()
 }
 
@@ -124,6 +124,7 @@ struct Segment {
 }
 
 impl Segment {
+    #[allow(clippy::too_many_arguments)]
     fn new<T: Into<String>>(
         zero: T,
         one: T,
@@ -243,7 +244,7 @@ impl Default for Segment {
 }
 
 fn to_usize(s: String) -> Option<usize> {
-    s.split('|').skip(1).next().map(|s| {
+    s.split('|').nth(1).map(|s| {
         s.trim()
             .split(' ')
             .filter_map(|s| Digit::unique(s.trim().len() as u32))

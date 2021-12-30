@@ -2,6 +2,10 @@ pub fn to_u32(s: String) -> Option<u32> {
     s.parse().ok()
 }
 
+pub fn to_vec_u32(s: String) -> Option<Vec<u32>> {
+    Some(s.chars().filter_map(|c| c.to_digit(10)).collect())
+}
+
 pub fn to_vec<T>(s: String, pattern: char, convert: fn(String) -> Option<T>) -> Vec<T> {
     s.split(pattern)
         .filter_map(|s| convert(s.to_string()))
@@ -25,5 +29,10 @@ mod tests {
     #[test]
     fn check_vec_u32() {
         assert_eq!(to_vec("2,4,6".to_string(), ',', to_u32), vec![2, 4, 6]);
+    }
+
+    #[test]
+    fn check_vec() {
+        assert_eq!(to_vec_u32("246".to_string()), Some(vec![2, 4, 6]));
     }
 }

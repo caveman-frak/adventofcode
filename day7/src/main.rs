@@ -25,7 +25,7 @@ fn part1(inputs: &[u32]) -> Result<()> {
 
 fn part2(inputs: &[u32]) -> Result<()> {
     let cast = Cast::new(inputs);
-    println!("Day 7 Part 1 => {:?}", cast.min_distance(cost));
+    println!("Day 7 Part 2 => {:?}", cast.min_distance(cost));
 
     Ok(())
 }
