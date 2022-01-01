@@ -19,17 +19,27 @@ fn part1(inputs: &[Syntax]) -> Result<()> {
         inputs
             .iter()
             .filter_map(|s| match s {
-                Syntax::Corrupted(bracket) => Some(bracket.score()),
+                Syntax::Corrupted(_) => Some(s.score()),
                 _ => None,
             })
-            .sum::<u32>()
+            .sum::<usize>()
     );
 
     Ok(())
 }
 
-fn part2(_inputs: &[Syntax]) -> Result<()> {
-    println!("Day 10 Part 1 => ");
+fn part2(inputs: &[Syntax]) -> Result<()> {
+    let mut incomplete = inputs
+        .iter()
+        .filter_map(|s| match s {
+            Syntax::Incomplete(_) => Some(s.score()),
+            _ => None,
+        })
+        .collect::<Vec<usize>>();
+
+    incomplete.sort_unstable();
+
+    println!("Day 10 Part 2 => {}", incomplete[incomplete.len() / 2]);
 
     Ok(())
 }
@@ -40,17 +50,6 @@ enum Bracket {
     Square,
     Curly,
     Angle,
-}
-
-impl Bracket {
-    fn score(&self) -> u32 {
-        match self {
-            Bracket::Round => 3,
-            Bracket::Square => 57,
-            Bracket::Curly => 1197,
-            Bracket::Angle => 25137,
-        }
-    }
 }
 
 #[derive(Debug, PartialEq)]
@@ -80,8 +79,39 @@ impl TryFrom<char> for Chunk {
 #[derive(Debug, PartialEq)]
 enum Syntax {
     Complete,
-    Incomplete,
+    Incomplete(Vec<Bracket>),
     Corrupted(Bracket),
+}
+
+impl Syntax {
+    fn score(&self) -> usize {
+        match self {
+            Syntax::Complete => 0,
+            Syntax::Corrupted(bracket) => Syntax::corrupted_score(bracket),
+            Syntax::Incomplete(brackets) => brackets
+                .iter()
+                .rev()
+                .fold(0, |acc, b| acc * 5 + Syntax::incomplete_score(b)),
+        }
+    }
+
+    fn corrupted_score(bracket: &Bracket) -> usize {
+        match bracket {
+            Bracket::Round => 3,
+            Bracket::Square => 57,
+            Bracket::Curly => 1197,
+            Bracket::Angle => 25137,
+        }
+    }
+
+    fn incomplete_score(bracket: &Bracket) -> usize {
+        match bracket {
+            Bracket::Round => 1,
+            Bracket::Square => 2,
+            Bracket::Curly => 3,
+            Bracket::Angle => 4,
+        }
+    }
 }
 
 impl FromStr for Syntax {
@@ -108,7 +138,7 @@ impl FromStr for Syntax {
         if stack.is_empty() {
             Ok(Syntax::Complete)
         } else {
-            Ok(Syntax::Incomplete)
+            Ok(Syntax::Incomplete(stack))
         }
     }
 }
@@ -128,7 +158,10 @@ mod tests {
         assert_eq!(inputs.len(), 10);
         assert_eq!(inputs.iter().filter(|s| s == &&Syntax::Complete).count(), 0);
         assert_eq!(
-            inputs.iter().filter(|s| s == &&Syntax::Incomplete).count(),
+            inputs
+                .iter()
+                .filter(|s| matches!(s, &&Syntax::Incomplete(_)))
+                .count(),
             5
         );
         assert_eq!(
@@ -138,17 +171,36 @@ mod tests {
                 .count(),
             5
         );
+
+        Ok(())
+    }
+
+    #[test]
+    fn check_scores() -> Result<()> {
+        let inputs = inputs(to_syntax, from_path("test/test.txt")?);
+
         assert_eq!(
             inputs
                 .iter()
                 .filter_map(|s| match s {
-                    Syntax::Corrupted(bracket) => Some(bracket.score()),
+                    Syntax::Corrupted(_) => Some(s.score()),
                     _ => None,
                 })
-                .sum::<u32>(),
+                .sum::<usize>(),
             26397
         );
 
+        let mut incomplete = inputs
+            .iter()
+            .filter_map(|s| match s {
+                Syntax::Incomplete(_) => Some(s.score()),
+                _ => None,
+            })
+            .collect::<Vec<usize>>();
+        assert_eq!(incomplete, vec![288957, 5566, 1480781, 995444, 294]);
+
+        incomplete.sort_unstable();
+        assert_eq!(incomplete[incomplete.len() / 2], 288957);
         Ok(())
     }
 
@@ -157,6 +209,28 @@ mod tests {
         let s = "[<>({}){}[([])<>]]".to_string();
         let syntax: Syntax = s.parse()?;
         assert_eq!(syntax, Syntax::Complete);
+
+        Ok(())
+    }
+
+    #[test]
+    fn check_incomplete_score() -> Result<()> {
+        let s = "<{([{{}}[<[[[<>{}]]]>[]]".to_string();
+        let syntax: Syntax = s.parse()?;
+
+        assert!(matches!(&syntax, Syntax::Incomplete(_)));
+        if let Syntax::Incomplete(brackets) = &syntax {
+            assert_eq!(
+                brackets,
+                &vec![
+                    Bracket::Angle,
+                    Bracket::Curly,
+                    Bracket::Round,
+                    Bracket::Square,
+                ]
+            );
+        }
+        assert_eq!(syntax.score(), 294);
 
         Ok(())
     }
